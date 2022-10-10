@@ -6,11 +6,28 @@ import { ContactsList } from './ContactsList/ContactsList'
 import { Container } from './Container/Container'
 import { Filter } from './Filter/Filter'
 import { DefaultPage } from './DefaultPage/DefaultPage'
+import { Modal } from './Modal/Modal'
+import { Alert } from './ModalAlert/ModalAlert'
 
 export class App extends React.Component {
 	state = {
 		contacts: [],
 		filter: '',
+		showModal: false,
+	}
+
+	componentDidUpdate(prevProps, prevState) {
+		if (this.state.contacts !== prevState.contacts) {
+			localStorage.setItem('contacts', JSON.stringify(this.state.contacts))
+		}
+	}
+
+	componentDidMount() {
+		const contacts = localStorage.getItem('contacts');
+		const parsedContacts = JSON.parse(contacts)
+		if (parsedContacts) {
+			this.setState({ contacts: parsedContacts });
+		}
 	}
 
 	submitHandler = data => {
@@ -20,7 +37,7 @@ export class App extends React.Component {
 		const names = contacts.map(contact => contact.name.toLowerCase())
 
 		if (names.includes(name.toLowerCase())) {
-			alert(`${name} is already in contacts.`);
+			this.toggleModal();
 			return;
 		}
 
@@ -35,6 +52,12 @@ export class App extends React.Component {
 		this.setState({ filter: e.target.value })
 	}
 
+	toggleModal = () => {
+		this.setState(state => ({
+			showModal: !state.showModal,
+		}))
+	}
+
 	deleteContact = (itemId) => {
 		this.setState((prevState) => {
 			return {
@@ -44,13 +67,16 @@ export class App extends React.Component {
 	}
 
 	render() {
-		const { filter, contacts } = this.state;
+		const { filter, contacts, showModal } = this.state;
 
 		const normalizedFilter = filter.toLowerCase();
 		const filteredContacts = contacts.filter(contact => contact.name.toLowerCase().includes(normalizedFilter))
 
 		return (<>
 			<Container text="PhoneBook">
+				{showModal && <Modal onClose={this.toggleModal}>
+					<Alert text="This name is already in contacts." />
+				</Modal>}
 				<PhoneBook onSubmit={this.submitHandler} />
 			</Container>
 			<Container text="Contacts">
